@@ -1,53 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/providers/product_notifier.dart';
 import 'package:flutter_application_1/screens/product_details_screen.dart';
 import 'package:flutter_application_1/screens/qr_scanner_screen.dart';
-import '../models/product.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/product_cart.dart';
 import '../screens/add_product_screen.dart';
 
-class MainScreen extends StatefulWidget {
+class MainScreen extends ConsumerWidget {
   const MainScreen({super.key, required this.title});
   final String title;
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    var products = ref.read(productProvider);
 
-final products = [
-    Product(
-      name: 'Punch`s mother',
-      pathImage: 'assets/mom.jpg',
-      description: 'Игрушечная мама Панча из Икеи.',
-      qrData: 'Data 1'
-    ),
-    Product(
-      name: 'Punch with mom ',
-      pathImage: 'assets/punch_with_mom.jpg',
-      description:
-          'Панча бросила его настоящая мама. Теперь мамой он считает игрушку, в которой видит защиту',
-      qrData: 'Data 1'
-    ),
-    Product(
-      name: 'Punch is sad',
-      pathImage: 'assets/punch is sad.jpg',
-      description:
-          'Панча обижают его сородичи, поэтому ему грустно и страшно. От врагов он прикрывается плюшевой мамой.',
-      qrData: 'Data 1',
-      isActive: true,
-    ),
-    Product(
-      name: 'Punch with a new friend',
-      pathImage: 'assets/punch witn friend.jpg',
-      description: 'Панча приняла одна из обезьян и теперь он не одинок.',
-      qrData: 'Data 1',
-      isActive: true,
-    ),
-  ];
-
-class _MainScreenState extends State<MainScreen> {
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 203, 172, 160),
@@ -57,14 +23,11 @@ class _MainScreenState extends State<MainScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => QRScannerScreen(
-                    products: products,
-                  )
-                )
+                  builder: (context) => QRScannerScreen(products: products),
+                ),
               );
             },
             icon: const Icon(Icons.camera_alt_rounded),
-
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -85,26 +48,24 @@ class _MainScreenState extends State<MainScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ProductDetailsScreen(product: products[index]),
+                    builder: (context) =>
+                        ProductDetailsScreen(product: products[index]),
                   ),
                 );
               },
-              ),
+            ),
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(onPressed: (){
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => AddProductScreen(),   
-        )
-      ).then((_){
-        setState((){});
-      });
-    }, child: Icon(Icons.add),
-    ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddProductScreen()),
+          );
+        },
+        child: Icon(Icons.add),
+      ),
     );
   }
-
 }
