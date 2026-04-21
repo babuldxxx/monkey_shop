@@ -1,6 +1,6 @@
-import 'package:flutter_application_1/data/repository/user_repository.dart';
-import 'package:flutter_application_1/domain/models/user.dart';
-import 'package:flutter_application_1/utils/database.dart';
+import 'package:monkey_shop/data/repository/user_repository.dart';
+import 'package:monkey_shop/domain/models/user.dart';
+import 'package:monkey_shop/utils/database.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AuthNotifier extends AsyncNotifier<User?> {

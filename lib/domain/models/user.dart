@@ -1,9 +1,17 @@
 class User {
-  String name;
-  String login;
-  String password;
+  final int? id;
+  final String name;
+  final String login;
+  final String password;
+  final String role;
 
-  User({required this.name, required this.login, required this.password});
+  User({
+    this.id,
+    required this.name,
+    required this.login,
+    required this.password,
+    this.role = 'user',
+  });
 }
 
 List<User> users = [];

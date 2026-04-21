@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/providers/product_notifier.dart';
-import 'package:flutter_application_1/screens/product_details_screen.dart';
-import 'package:flutter_application_1/screens/qr_scanner_screen.dart';
+import 'package:monkey_shop/providers/product_notifier.dart';
+import 'package:monkey_shop/screens/product_details_screen.dart';
+import 'package:monkey_shop/screens/qr_scanner_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/product_cart.dart';
 import '../screens/add_product_screen.dart';

@@ -1,4 +1,4 @@
-name: flutter_application_1
+name: monkey_shop
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -39,7 +39,6 @@ dependencies:
   pretty_qr_code: ^3.6.0
   image_picker: ^1.2.1
   drift: ^2.14.0
-  riverpod: ^3.2.1
   flutter_riverpod: ^3.3.1
 
 dev_dependencies:

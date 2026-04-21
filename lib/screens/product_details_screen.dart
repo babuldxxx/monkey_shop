@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/domain/models/product.dart';
+import 'package:monkey_shop/domain/models/product.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 
 class ProductDetailsScreen extends StatelessWidget {
@@ -128,7 +128,7 @@ class ProductDetailsScreen extends StatelessWidget {
                       ),
                     ),
                   const SizedBox(height: 32),
-                  if (product.isActive == true) const SizedBox(height: 8),
+                  if (product.status == true) const SizedBox(height: 8),
                   PrettyQrView(
                     qrImage: QrImage(
                       QrCode(8, QrErrorCorrectLevel.H)..addData(product.qrData),

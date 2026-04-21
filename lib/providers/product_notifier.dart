@@ -1,5 +1,5 @@
-import 'package:flutter_application_1/data/repository/product_repository.dart';
-import 'package:flutter_application_1/domain/models/product.dart';
+import 'package:monkey_shop/data/repository/product_repository.dart';
+import 'package:monkey_shop/domain/models/product.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ProductNotifier extends Notifier<List<Product>> {

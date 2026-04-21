@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/domain/models/product.dart';
-import 'package:flutter_application_1/screens/product_details_screen.dart';
+import 'package:monkey_shop/domain/models/product.dart';
+import 'package:monkey_shop/screens/product_details_screen.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class QRScannerScreen extends StatefulWidget {

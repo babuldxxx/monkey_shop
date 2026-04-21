@@ -1,15 +1,19 @@
+import 'dart:typed_data';
+
 class Product {
-  String name;
-  String pathImage;
-  String description;
-  bool isActive;
-  String qrData;
+  final int? id;
+  final String name;
+  final Uint8List? imageData;
+  final String description;
+  final bool isActive;
+  final String qrData;
 
   Product({
+    this.id,
     required this.name, 
-    required this.pathImage, 
-    this.description = "", 
-    this.isActive = false, 
+    this.imageData,
+    this.description = "",
+    this.isActive = false,
     required this.qrData
     });
 }

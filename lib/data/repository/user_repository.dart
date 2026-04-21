@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
-import 'package:flutter_application_1/domain/models/user.dart';
-import 'package:flutter_application_1/utils/database.dart';
+import 'package:monkey_shop/domain/models/user.dart';
+import 'package:monkey_shop/utils/database.dart';
 
 class UserRepository {
   final Database _database;
@@ -8,39 +8,40 @@ class UserRepository {
   UserRepository(this._database);
 
   Future<List<User>> getUsers() async {
-    var list = await _database.select(_database.userDto).get();
-    return list.map((user) => user.toDomain()).toList();
+    var rows = await _database.select(_database.userData).get();
+    return rows.map((user) => user.toDomain()).toList();
   }
 
-  Future<User?> isAuth(User user) async {
-    var res = await _database.select(_database.userDto).get();
+  Future<User?> isAuth(String login, String password) async {
+    var res = await _database.select(_database.userData).get();
 
-    for (var tmpUser in res) {
-      if (tmpUser.login == user.login && tmpUser.password == user.password) {
-        return tmpUser.toDomain();
+    for (var user in res) {
+      if (user.login == user.login && user.password == user.password) {
+        return user.toDomain();
       }
     }
 
     return Future.value(null);
   }
 
-  void addUser(User user) {
-    _database.into(_database.userDto).insert(user.toDto());
+  Future<void> addUser(User user) async{
+    await _database.into(_database.userData).insert(user.toDto());
   }
 }
 
-extension UserMapper on UserData {
+extension UserMapper on UserDto {
   User toDomain() {
-    return User(name: name, login: login, password: password);
+    return User(id: id, name: name, login: login, password: password, role: role);
   }
 }
 
 extension UserDtoMapper on User {
-  UserDtoCompanion toDto() {
-    return UserDtoCompanion(
+  UserDataCompanion toDto() {
+    return UserDataCompanion(
       name: Value(name),
       login: Value(login),
       password: Value(password),
+      role: Value(role),
     );
   }
 }

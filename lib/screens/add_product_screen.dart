@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/domain/models/product.dart';
-import 'package:flutter_application_1/providers/product_notifier.dart';
-import 'package:flutter_application_1/widgets/text_field_app.dart';
+import 'package:monkey_shop/domain/models/product.dart';
+import 'package:monkey_shop/providers/product_notifier.dart';
+import 'package:monkey_shop/widgets/text_field_app.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
