@@ -1,13 +1,19 @@
 import 'package:drift/drift.dart';
 import 'package:monkey_shop/domain/models/product.dart';
+import 'package:monkey_shop/domain/models/user.dart';
 import 'package:monkey_shop/utils/database.dart';
 
 class ProductRepository {
   final Database _database = db;
 
   Future<List<Product>> getProducts() async {
-    final productDtos = await _database.select(_database.productData).get();
-    return productDtos.map((dto) => dto.toDomain()).toList();
+    final rows = await _database.select(_database.productData).get();
+    return rows.map((row) => row.toDomain()).toList();
+  }
+
+  Future<Product?> getProductById(int id) async {
+    final row = await (_database.select(_database.productData)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
+    return row?.toDomain();
   }
 
   Future<void> addProduct(Product product) async {
@@ -20,10 +26,22 @@ class ProductRepository {
     )..where((tbl) => tbl.id.equals(id))).go();
   }
 
-  Future<void> updateProduct(int id, Product product) async {
+  Future<void> updateProduct(Product product) async {
     await (_database.update(
       _database.productData,
-    )..where((tbl) => tbl.id.equals(id))).write(product.toDto());
+    )..where((tbl) => tbl.id.equals(product.id!))).write(product.toDto());
+  }
+
+  bool canUserEditProduct(Product product, User? currentUser){
+    if(currentUser == null) return false;
+
+    if(currentUser.isAdmin) return true;
+
+    return product.createdBy == currentUser.id;
+  }
+
+  bool canUserDeleteProduct(Product product, User? currentUser){
+    return canUserEditProduct(product, currentUser);
   }
 }
 
@@ -32,10 +50,13 @@ extension ProductMapper on ProductDto {
     return Product(
       id: id,
       name: name,
-      imageData: imageData,
       description: description,
-      isActive: isActive,
+      imageData: imageData,
+      status: status,
       qrData: qrData,
+      createdBy: createdBy,
+      createdAt: createdAt,
+      updatedAt: updatedAt
     );
   }
 }
@@ -44,41 +65,14 @@ extension ProductDtoMapper on Product {
   ProductDataCompanion toDto() {
     return ProductDataCompanion(
       name: Value(name),
-      imageData: Value(imageData),
       description: Value(description),
-      isActive: Value(isActive),
+      imageData: Value(imageData),
+      status: Value(status),
       qrData: Value(qrData),
+      createdBy: Value(createdBy ?? 1),
+      createdAt: Value(createdAt ?? DateTime.now()),
+      updatedAt: Value(updatedAt ?? DateTime.now()),
     );
   }
 }
 
-// static final List<Product> _products = [
-//   Product(
-//     name: 'Punch`s mother',
-//     pathImage: 'assets/mom.jpg',
-//     description: 'Игрушечная мама Панча из Икеи.',
-//     qrData: 'Data 1',
-//   ),
-//   Product(
-//     name: 'Punch with mom ',
-//     pathImage: 'assets/punch_with_mom.jpg',
-//     description:
-//     'Панча бросила его настоящая мама. Теперь мамой он считает игрушку, в которой видит защиту',
-//     qrData: 'Data 1',
-//   ),
-//   Product(
-//     name: 'Punch is sad',
-//     pathImage: 'assets/punch is sad.jpg',
-//     description:
-//     'Панча обижают его сородичи, поэтому ему грустно и страшно. От врагов он прикрывается плюшевой мамой.',
-//     qrData: 'Data 1',
-//     status: true,
-//   ),
-//   Product(
-//     name: 'Punch with a new friend',
-//     pathImage: 'assets/punch witn friend.jpg',
-//     description: 'Панча приняла одна из обезьян и теперь он не одинок.',
-//     qrData: 'Data 1',
-//     status: true,
-//   ),
-// ];

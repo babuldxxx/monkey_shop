@@ -3,17 +3,26 @@ import 'dart:typed_data';
 class Product {
   final int? id;
   final String name;
-  final Uint8List? imageData;
   final String description;
-  final bool isActive;
+  final Uint8List? imageData;
+  final String status;
   final String qrData;
+  final int? createdBy;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   Product({
     this.id,
-    required this.name, 
-    this.imageData,
+    required this.name,
     this.description = "",
-    this.isActive = false,
-    required this.qrData
+    this.imageData,
+    required this.status,
+    required this.qrData,
+    this.createdBy,
+    this.createdAt,
+    this.updatedAt
     });
+
+  bool get isActive => status == 'available';
+  bool get isTaken => status == 'taken';
 }

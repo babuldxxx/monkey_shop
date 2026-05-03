@@ -3,9 +3,7 @@ import 'package:monkey_shop/domain/models/user.dart';
 import 'package:monkey_shop/utils/database.dart';
 
 class UserRepository {
-  final Database _database;
-
-  UserRepository(this._database);
+  final Database _database = db;
 
   Future<List<User>> getUsers() async {
     var rows = await _database.select(_database.userData).get();
@@ -15,16 +13,27 @@ class UserRepository {
   Future<User?> isAuth(String login, String password) async {
     var res = await _database.select(_database.userData).get();
 
-    for (var user in res) {
-      if (user.login == user.login && user.password == user.password) {
-        return user.toDomain();
+    for (var tmpUser in res) {
+      if (tmpUser.login == login && tmpUser.password == password) {
+        return tmpUser.toDomain();
       }
     }
 
     return Future.value(null);
   }
 
+  Future<bool> isLoginExists(String login) async{
+    var res = await _database.select(_database.userData).get();
+    return res.any((user) => user.login == login);
+  }
+
   Future<void> addUser(User user) async{
+    bool exists = await isLoginExists(user.login);
+
+    if(exists){
+      throw Exception('Пользователь с таким логином уже существует');
+    }
+
     await _database.into(_database.userData).insert(user.toDto());
   }
 }

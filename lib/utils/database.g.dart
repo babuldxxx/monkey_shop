@@ -390,20 +390,14 @@ class $ProductDataTable extends ProductData
     type: DriftSqlType.blob,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _isActiveMeta = const VerificationMeta(
-    'isActive',
-  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
-  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
-    'is_active',
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
     aliasedName,
     false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_active" IN (0, 1))',
-    ),
-    defaultValue: Constant(false),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
   );
   static const VerificationMeta _qrDataMeta = const VerificationMeta('qrData');
   @override
@@ -412,6 +406,17 @@ class $ProductDataTable extends ProductData
     aliasedName,
     false,
     type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdByMeta = const VerificationMeta(
+    'createdBy',
+  );
+  @override
+  late final GeneratedColumn<int> createdBy = GeneratedColumn<int>(
+    'created_by',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
@@ -442,8 +447,9 @@ class $ProductDataTable extends ProductData
     name,
     description,
     imageData,
-    isActive,
+    status,
     qrData,
+    createdBy,
     createdAt,
     updatedAt,
   ];
@@ -487,11 +493,13 @@ class $ProductDataTable extends ProductData
         imageData.isAcceptableOrUnknown(data['image_data']!, _imageDataMeta),
       );
     }
-    if (data.containsKey('is_active')) {
+    if (data.containsKey('status')) {
       context.handle(
-        _isActiveMeta,
-        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
       );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
     }
     if (data.containsKey('qr_data')) {
       context.handle(
@@ -500,6 +508,14 @@ class $ProductDataTable extends ProductData
       );
     } else if (isInserting) {
       context.missing(_qrDataMeta);
+    }
+    if (data.containsKey('created_by')) {
+      context.handle(
+        _createdByMeta,
+        createdBy.isAcceptableOrUnknown(data['created_by']!, _createdByMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdByMeta);
     }
     if (data.containsKey('created_at')) {
       context.handle(
@@ -538,13 +554,17 @@ class $ProductDataTable extends ProductData
         DriftSqlType.blob,
         data['${effectivePrefix}image_data'],
       ),
-      isActive: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}is_active'],
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
       )!,
       qrData: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}qr_data'],
+      )!,
+      createdBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_by'],
       )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
@@ -568,8 +588,9 @@ class ProductDto extends DataClass implements Insertable<ProductDto> {
   final String name;
   final String description;
   final Uint8List? imageData;
-  final bool isActive;
+  final String status;
   final String qrData;
+  final int createdBy;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   const ProductDto({
@@ -577,8 +598,9 @@ class ProductDto extends DataClass implements Insertable<ProductDto> {
     required this.name,
     required this.description,
     this.imageData,
-    required this.isActive,
+    required this.status,
     required this.qrData,
+    required this.createdBy,
     this.createdAt,
     this.updatedAt,
   });
@@ -591,8 +613,9 @@ class ProductDto extends DataClass implements Insertable<ProductDto> {
     if (!nullToAbsent || imageData != null) {
       map['image_data'] = Variable<Uint8List>(imageData);
     }
-    map['is_active'] = Variable<bool>(isActive);
+    map['status'] = Variable<String>(status);
     map['qr_data'] = Variable<String>(qrData);
+    map['created_by'] = Variable<int>(createdBy);
     if (!nullToAbsent || createdAt != null) {
       map['created_at'] = Variable<DateTime>(createdAt);
     }
@@ -610,8 +633,9 @@ class ProductDto extends DataClass implements Insertable<ProductDto> {
       imageData: imageData == null && nullToAbsent
           ? const Value.absent()
           : Value(imageData),
-      isActive: Value(isActive),
+      status: Value(status),
       qrData: Value(qrData),
+      createdBy: Value(createdBy),
       createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
           : Value(createdAt),
@@ -631,8 +655,9 @@ class ProductDto extends DataClass implements Insertable<ProductDto> {
       name: serializer.fromJson<String>(json['name']),
       description: serializer.fromJson<String>(json['description']),
       imageData: serializer.fromJson<Uint8List?>(json['imageData']),
-      isActive: serializer.fromJson<bool>(json['isActive']),
+      status: serializer.fromJson<String>(json['status']),
       qrData: serializer.fromJson<String>(json['qrData']),
+      createdBy: serializer.fromJson<int>(json['createdBy']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
     );
@@ -645,8 +670,9 @@ class ProductDto extends DataClass implements Insertable<ProductDto> {
       'name': serializer.toJson<String>(name),
       'description': serializer.toJson<String>(description),
       'imageData': serializer.toJson<Uint8List?>(imageData),
-      'isActive': serializer.toJson<bool>(isActive),
+      'status': serializer.toJson<String>(status),
       'qrData': serializer.toJson<String>(qrData),
+      'createdBy': serializer.toJson<int>(createdBy),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
     };
@@ -657,8 +683,9 @@ class ProductDto extends DataClass implements Insertable<ProductDto> {
     String? name,
     String? description,
     Value<Uint8List?> imageData = const Value.absent(),
-    bool? isActive,
+    String? status,
     String? qrData,
+    int? createdBy,
     Value<DateTime?> createdAt = const Value.absent(),
     Value<DateTime?> updatedAt = const Value.absent(),
   }) => ProductDto(
@@ -666,8 +693,9 @@ class ProductDto extends DataClass implements Insertable<ProductDto> {
     name: name ?? this.name,
     description: description ?? this.description,
     imageData: imageData.present ? imageData.value : this.imageData,
-    isActive: isActive ?? this.isActive,
+    status: status ?? this.status,
     qrData: qrData ?? this.qrData,
+    createdBy: createdBy ?? this.createdBy,
     createdAt: createdAt.present ? createdAt.value : this.createdAt,
     updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
   );
@@ -679,8 +707,9 @@ class ProductDto extends DataClass implements Insertable<ProductDto> {
           ? data.description.value
           : this.description,
       imageData: data.imageData.present ? data.imageData.value : this.imageData,
-      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      status: data.status.present ? data.status.value : this.status,
       qrData: data.qrData.present ? data.qrData.value : this.qrData,
+      createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -693,8 +722,9 @@ class ProductDto extends DataClass implements Insertable<ProductDto> {
           ..write('name: $name, ')
           ..write('description: $description, ')
           ..write('imageData: $imageData, ')
-          ..write('isActive: $isActive, ')
+          ..write('status: $status, ')
           ..write('qrData: $qrData, ')
+          ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -707,8 +737,9 @@ class ProductDto extends DataClass implements Insertable<ProductDto> {
     name,
     description,
     $driftBlobEquality.hash(imageData),
-    isActive,
+    status,
     qrData,
+    createdBy,
     createdAt,
     updatedAt,
   );
@@ -720,8 +751,9 @@ class ProductDto extends DataClass implements Insertable<ProductDto> {
           other.name == this.name &&
           other.description == this.description &&
           $driftBlobEquality.equals(other.imageData, this.imageData) &&
-          other.isActive == this.isActive &&
+          other.status == this.status &&
           other.qrData == this.qrData &&
+          other.createdBy == this.createdBy &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -731,8 +763,9 @@ class ProductDataCompanion extends UpdateCompanion<ProductDto> {
   final Value<String> name;
   final Value<String> description;
   final Value<Uint8List?> imageData;
-  final Value<bool> isActive;
+  final Value<String> status;
   final Value<String> qrData;
+  final Value<int> createdBy;
   final Value<DateTime?> createdAt;
   final Value<DateTime?> updatedAt;
   const ProductDataCompanion({
@@ -740,8 +773,9 @@ class ProductDataCompanion extends UpdateCompanion<ProductDto> {
     this.name = const Value.absent(),
     this.description = const Value.absent(),
     this.imageData = const Value.absent(),
-    this.isActive = const Value.absent(),
+    this.status = const Value.absent(),
     this.qrData = const Value.absent(),
+    this.createdBy = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -750,20 +784,24 @@ class ProductDataCompanion extends UpdateCompanion<ProductDto> {
     required String name,
     required String description,
     this.imageData = const Value.absent(),
-    this.isActive = const Value.absent(),
+    required String status,
     required String qrData,
+    required int createdBy,
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   }) : name = Value(name),
        description = Value(description),
-       qrData = Value(qrData);
+       status = Value(status),
+       qrData = Value(qrData),
+       createdBy = Value(createdBy);
   static Insertable<ProductDto> custom({
     Expression<int>? id,
     Expression<String>? name,
     Expression<String>? description,
     Expression<Uint8List>? imageData,
-    Expression<bool>? isActive,
+    Expression<String>? status,
     Expression<String>? qrData,
+    Expression<int>? createdBy,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
   }) {
@@ -772,8 +810,9 @@ class ProductDataCompanion extends UpdateCompanion<ProductDto> {
       if (name != null) 'name': name,
       if (description != null) 'description': description,
       if (imageData != null) 'image_data': imageData,
-      if (isActive != null) 'is_active': isActive,
+      if (status != null) 'status': status,
       if (qrData != null) 'qr_data': qrData,
+      if (createdBy != null) 'created_by': createdBy,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -784,8 +823,9 @@ class ProductDataCompanion extends UpdateCompanion<ProductDto> {
     Value<String>? name,
     Value<String>? description,
     Value<Uint8List?>? imageData,
-    Value<bool>? isActive,
+    Value<String>? status,
     Value<String>? qrData,
+    Value<int>? createdBy,
     Value<DateTime?>? createdAt,
     Value<DateTime?>? updatedAt,
   }) {
@@ -794,8 +834,9 @@ class ProductDataCompanion extends UpdateCompanion<ProductDto> {
       name: name ?? this.name,
       description: description ?? this.description,
       imageData: imageData ?? this.imageData,
-      isActive: isActive ?? this.isActive,
+      status: status ?? this.status,
       qrData: qrData ?? this.qrData,
+      createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -816,11 +857,14 @@ class ProductDataCompanion extends UpdateCompanion<ProductDto> {
     if (imageData.present) {
       map['image_data'] = Variable<Uint8List>(imageData.value);
     }
-    if (isActive.present) {
-      map['is_active'] = Variable<bool>(isActive.value);
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
     }
     if (qrData.present) {
       map['qr_data'] = Variable<String>(qrData.value);
+    }
+    if (createdBy.present) {
+      map['created_by'] = Variable<int>(createdBy.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -838,10 +882,363 @@ class ProductDataCompanion extends UpdateCompanion<ProductDto> {
           ..write('name: $name, ')
           ..write('description: $description, ')
           ..write('imageData: $imageData, ')
-          ..write('isActive: $isActive, ')
+          ..write('status: $status, ')
           ..write('qrData: $qrData, ')
+          ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TakeDataTable extends TakeData with TableInfo<$TakeDataTable, TakeDto> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TakeDataTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<int> userId = GeneratedColumn<int>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _productIdMeta = const VerificationMeta(
+    'productId',
+  );
+  @override
+  late final GeneratedColumn<int> productId = GeneratedColumn<int>(
+    'product_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _takenAtMeta = const VerificationMeta(
+    'takenAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> takenAt = GeneratedColumn<DateTime>(
+    'taken_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _returnedAtMeta = const VerificationMeta(
+    'returnedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> returnedAt = GeneratedColumn<DateTime>(
+    'returned_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    productId,
+    takenAt,
+    returnedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'take_data';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TakeDto> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('product_id')) {
+      context.handle(
+        _productIdMeta,
+        productId.isAcceptableOrUnknown(data['product_id']!, _productIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_productIdMeta);
+    }
+    if (data.containsKey('taken_at')) {
+      context.handle(
+        _takenAtMeta,
+        takenAt.isAcceptableOrUnknown(data['taken_at']!, _takenAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_takenAtMeta);
+    }
+    if (data.containsKey('returned_at')) {
+      context.handle(
+        _returnedAtMeta,
+        returnedAt.isAcceptableOrUnknown(data['returned_at']!, _returnedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TakeDto map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TakeDto(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}user_id'],
+      )!,
+      productId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}product_id'],
+      )!,
+      takenAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}taken_at'],
+      )!,
+      returnedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}returned_at'],
+      ),
+    );
+  }
+
+  @override
+  $TakeDataTable createAlias(String alias) {
+    return $TakeDataTable(attachedDatabase, alias);
+  }
+}
+
+class TakeDto extends DataClass implements Insertable<TakeDto> {
+  final int id;
+  final int userId;
+  final int productId;
+  final DateTime takenAt;
+  final DateTime? returnedAt;
+  const TakeDto({
+    required this.id,
+    required this.userId,
+    required this.productId,
+    required this.takenAt,
+    this.returnedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['user_id'] = Variable<int>(userId);
+    map['product_id'] = Variable<int>(productId);
+    map['taken_at'] = Variable<DateTime>(takenAt);
+    if (!nullToAbsent || returnedAt != null) {
+      map['returned_at'] = Variable<DateTime>(returnedAt);
+    }
+    return map;
+  }
+
+  TakeDataCompanion toCompanion(bool nullToAbsent) {
+    return TakeDataCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      productId: Value(productId),
+      takenAt: Value(takenAt),
+      returnedAt: returnedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(returnedAt),
+    );
+  }
+
+  factory TakeDto.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TakeDto(
+      id: serializer.fromJson<int>(json['id']),
+      userId: serializer.fromJson<int>(json['userId']),
+      productId: serializer.fromJson<int>(json['productId']),
+      takenAt: serializer.fromJson<DateTime>(json['takenAt']),
+      returnedAt: serializer.fromJson<DateTime?>(json['returnedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'userId': serializer.toJson<int>(userId),
+      'productId': serializer.toJson<int>(productId),
+      'takenAt': serializer.toJson<DateTime>(takenAt),
+      'returnedAt': serializer.toJson<DateTime?>(returnedAt),
+    };
+  }
+
+  TakeDto copyWith({
+    int? id,
+    int? userId,
+    int? productId,
+    DateTime? takenAt,
+    Value<DateTime?> returnedAt = const Value.absent(),
+  }) => TakeDto(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    productId: productId ?? this.productId,
+    takenAt: takenAt ?? this.takenAt,
+    returnedAt: returnedAt.present ? returnedAt.value : this.returnedAt,
+  );
+  TakeDto copyWithCompanion(TakeDataCompanion data) {
+    return TakeDto(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      productId: data.productId.present ? data.productId.value : this.productId,
+      takenAt: data.takenAt.present ? data.takenAt.value : this.takenAt,
+      returnedAt: data.returnedAt.present
+          ? data.returnedAt.value
+          : this.returnedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TakeDto(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('productId: $productId, ')
+          ..write('takenAt: $takenAt, ')
+          ..write('returnedAt: $returnedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, userId, productId, takenAt, returnedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TakeDto &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.productId == this.productId &&
+          other.takenAt == this.takenAt &&
+          other.returnedAt == this.returnedAt);
+}
+
+class TakeDataCompanion extends UpdateCompanion<TakeDto> {
+  final Value<int> id;
+  final Value<int> userId;
+  final Value<int> productId;
+  final Value<DateTime> takenAt;
+  final Value<DateTime?> returnedAt;
+  const TakeDataCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.productId = const Value.absent(),
+    this.takenAt = const Value.absent(),
+    this.returnedAt = const Value.absent(),
+  });
+  TakeDataCompanion.insert({
+    this.id = const Value.absent(),
+    required int userId,
+    required int productId,
+    required DateTime takenAt,
+    this.returnedAt = const Value.absent(),
+  }) : userId = Value(userId),
+       productId = Value(productId),
+       takenAt = Value(takenAt);
+  static Insertable<TakeDto> custom({
+    Expression<int>? id,
+    Expression<int>? userId,
+    Expression<int>? productId,
+    Expression<DateTime>? takenAt,
+    Expression<DateTime>? returnedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (productId != null) 'product_id': productId,
+      if (takenAt != null) 'taken_at': takenAt,
+      if (returnedAt != null) 'returned_at': returnedAt,
+    });
+  }
+
+  TakeDataCompanion copyWith({
+    Value<int>? id,
+    Value<int>? userId,
+    Value<int>? productId,
+    Value<DateTime>? takenAt,
+    Value<DateTime?>? returnedAt,
+  }) {
+    return TakeDataCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      productId: productId ?? this.productId,
+      takenAt: takenAt ?? this.takenAt,
+      returnedAt: returnedAt ?? this.returnedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<int>(userId.value);
+    }
+    if (productId.present) {
+      map['product_id'] = Variable<int>(productId.value);
+    }
+    if (takenAt.present) {
+      map['taken_at'] = Variable<DateTime>(takenAt.value);
+    }
+    if (returnedAt.present) {
+      map['returned_at'] = Variable<DateTime>(returnedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TakeDataCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('productId: $productId, ')
+          ..write('takenAt: $takenAt, ')
+          ..write('returnedAt: $returnedAt')
           ..write(')'))
         .toString();
   }
@@ -852,11 +1249,16 @@ abstract class _$Database extends GeneratedDatabase {
   $DatabaseManager get managers => $DatabaseManager(this);
   late final $UserDataTable userData = $UserDataTable(this);
   late final $ProductDataTable productData = $ProductDataTable(this);
+  late final $TakeDataTable takeData = $TakeDataTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [userData, productData];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    userData,
+    productData,
+    takeData,
+  ];
 }
 
 typedef $$UserDataTableCreateCompanionBuilder =
@@ -1053,8 +1455,9 @@ typedef $$ProductDataTableCreateCompanionBuilder =
       required String name,
       required String description,
       Value<Uint8List?> imageData,
-      Value<bool> isActive,
+      required String status,
       required String qrData,
+      required int createdBy,
       Value<DateTime?> createdAt,
       Value<DateTime?> updatedAt,
     });
@@ -1064,8 +1467,9 @@ typedef $$ProductDataTableUpdateCompanionBuilder =
       Value<String> name,
       Value<String> description,
       Value<Uint8List?> imageData,
-      Value<bool> isActive,
+      Value<String> status,
       Value<String> qrData,
+      Value<int> createdBy,
       Value<DateTime?> createdAt,
       Value<DateTime?> updatedAt,
     });
@@ -1099,13 +1503,18 @@ class $$ProductDataTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<bool> get isActive => $composableBuilder(
-    column: $table.isActive,
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
     builder: (column) => ColumnFilters(column),
   );
 
   ColumnFilters<String> get qrData => $composableBuilder(
     column: $table.qrData,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdBy => $composableBuilder(
+    column: $table.createdBy,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1149,13 +1558,18 @@ class $$ProductDataTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<bool> get isActive => $composableBuilder(
-    column: $table.isActive,
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
     builder: (column) => ColumnOrderings(column),
   );
 
   ColumnOrderings<String> get qrData => $composableBuilder(
     column: $table.qrData,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdBy => $composableBuilder(
+    column: $table.createdBy,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -1193,11 +1607,14 @@ class $$ProductDataTableAnnotationComposer
   GeneratedColumn<Uint8List> get imageData =>
       $composableBuilder(column: $table.imageData, builder: (column) => column);
 
-  GeneratedColumn<bool> get isActive =>
-      $composableBuilder(column: $table.isActive, builder: (column) => column);
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
 
   GeneratedColumn<String> get qrData =>
       $composableBuilder(column: $table.qrData, builder: (column) => column);
+
+  GeneratedColumn<int> get createdBy =>
+      $composableBuilder(column: $table.createdBy, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -1241,8 +1658,9 @@ class $$ProductDataTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<String> description = const Value.absent(),
                 Value<Uint8List?> imageData = const Value.absent(),
-                Value<bool> isActive = const Value.absent(),
+                Value<String> status = const Value.absent(),
                 Value<String> qrData = const Value.absent(),
+                Value<int> createdBy = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
               }) => ProductDataCompanion(
@@ -1250,8 +1668,9 @@ class $$ProductDataTableTableManager
                 name: name,
                 description: description,
                 imageData: imageData,
-                isActive: isActive,
+                status: status,
                 qrData: qrData,
+                createdBy: createdBy,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
@@ -1261,8 +1680,9 @@ class $$ProductDataTableTableManager
                 required String name,
                 required String description,
                 Value<Uint8List?> imageData = const Value.absent(),
-                Value<bool> isActive = const Value.absent(),
+                required String status,
                 required String qrData,
+                required int createdBy,
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
               }) => ProductDataCompanion.insert(
@@ -1270,8 +1690,9 @@ class $$ProductDataTableTableManager
                 name: name,
                 description: description,
                 imageData: imageData,
-                isActive: isActive,
+                status: status,
                 qrData: qrData,
+                createdBy: createdBy,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
@@ -1297,6 +1718,196 @@ typedef $$ProductDataTableProcessedTableManager =
       ProductDto,
       PrefetchHooks Function()
     >;
+typedef $$TakeDataTableCreateCompanionBuilder =
+    TakeDataCompanion Function({
+      Value<int> id,
+      required int userId,
+      required int productId,
+      required DateTime takenAt,
+      Value<DateTime?> returnedAt,
+    });
+typedef $$TakeDataTableUpdateCompanionBuilder =
+    TakeDataCompanion Function({
+      Value<int> id,
+      Value<int> userId,
+      Value<int> productId,
+      Value<DateTime> takenAt,
+      Value<DateTime?> returnedAt,
+    });
+
+class $$TakeDataTableFilterComposer
+    extends Composer<_$Database, $TakeDataTable> {
+  $$TakeDataTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get productId => $composableBuilder(
+    column: $table.productId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get takenAt => $composableBuilder(
+    column: $table.takenAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get returnedAt => $composableBuilder(
+    column: $table.returnedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TakeDataTableOrderingComposer
+    extends Composer<_$Database, $TakeDataTable> {
+  $$TakeDataTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get productId => $composableBuilder(
+    column: $table.productId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get takenAt => $composableBuilder(
+    column: $table.takenAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get returnedAt => $composableBuilder(
+    column: $table.returnedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TakeDataTableAnnotationComposer
+    extends Composer<_$Database, $TakeDataTable> {
+  $$TakeDataTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<int> get productId =>
+      $composableBuilder(column: $table.productId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get takenAt =>
+      $composableBuilder(column: $table.takenAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get returnedAt => $composableBuilder(
+    column: $table.returnedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$TakeDataTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $TakeDataTable,
+          TakeDto,
+          $$TakeDataTableFilterComposer,
+          $$TakeDataTableOrderingComposer,
+          $$TakeDataTableAnnotationComposer,
+          $$TakeDataTableCreateCompanionBuilder,
+          $$TakeDataTableUpdateCompanionBuilder,
+          (TakeDto, BaseReferences<_$Database, $TakeDataTable, TakeDto>),
+          TakeDto,
+          PrefetchHooks Function()
+        > {
+  $$TakeDataTableTableManager(_$Database db, $TakeDataTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TakeDataTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TakeDataTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TakeDataTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> userId = const Value.absent(),
+                Value<int> productId = const Value.absent(),
+                Value<DateTime> takenAt = const Value.absent(),
+                Value<DateTime?> returnedAt = const Value.absent(),
+              }) => TakeDataCompanion(
+                id: id,
+                userId: userId,
+                productId: productId,
+                takenAt: takenAt,
+                returnedAt: returnedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int userId,
+                required int productId,
+                required DateTime takenAt,
+                Value<DateTime?> returnedAt = const Value.absent(),
+              }) => TakeDataCompanion.insert(
+                id: id,
+                userId: userId,
+                productId: productId,
+                takenAt: takenAt,
+                returnedAt: returnedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TakeDataTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $TakeDataTable,
+      TakeDto,
+      $$TakeDataTableFilterComposer,
+      $$TakeDataTableOrderingComposer,
+      $$TakeDataTableAnnotationComposer,
+      $$TakeDataTableCreateCompanionBuilder,
+      $$TakeDataTableUpdateCompanionBuilder,
+      (TakeDto, BaseReferences<_$Database, $TakeDataTable, TakeDto>),
+      TakeDto,
+      PrefetchHooks Function()
+    >;
 
 class $DatabaseManager {
   final _$Database _db;
@@ -1305,4 +1916,6 @@ class $DatabaseManager {
       $$UserDataTableTableManager(_db, _db.userData);
   $$ProductDataTableTableManager get productData =>
       $$ProductDataTableTableManager(_db, _db.productData);
+  $$TakeDataTableTableManager get takeData =>
+      $$TakeDataTableTableManager(_db, _db.takeData);
 }

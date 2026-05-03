@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:monkey_shop/data/repository/user_repository.dart';
+import 'package:monkey_shop/providers/auth_notifier.dart';
 import '../domain/models/user.dart';
 import '../widgets/button_app.dart';
 import '../widgets/text_field_app.dart';
 
-class RegisterScreen extends StatefulWidget {
+class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  _RegisterScreenState createState() => _RegisterScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   var loginController = TextEditingController();
   var nameController = TextEditingController();
   var passwordController = TextEditingController();
@@ -20,6 +23,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+
+    if (authState.hasValue && authState.value != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Вы успешно зарегистрировались!'), backgroundColor: Colors.green,),
+        );
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -80,7 +94,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
 
               const SizedBox(height: 30),
-              ButtonApp(onPressed: register, text: 'Зарегистрироваться'),
+              authState.when(
+                data: (_) =>
+                    ButtonApp(onPressed: register, text: 'Зарегистрироваться'),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stackTrace) {
+                  return Column(
+                    children: [
+                      Text(
+                        error.toString(),
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                      const SizedBox(height: 16),
+                      ButtonApp(
+                        onPressed: register,
+                        text: 'Зарегистрироваться',
+                      ),
+                    ],
+                  );
+                },
+              ),
             ],
           ),
         ),
@@ -88,40 +121,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  void register() {
+  Future<void> register() async {
     formKey.currentState!.validate();
+
     if (nameController.text.isEmpty ||
         loginController.text.isEmpty ||
         passwordController.text.isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Поля введены неверно')));
-    } else if (loginController.text.length < 5 ||
-        passwordController.text.length < 5) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Логин и пароль должны содержать больше 5 символов'),
-        ),
-      );
-    } else if (passwordController.text != confirmPasswordController.text) {
+
+      return;
+    }
+
+    if (passwordController.text != confirmPasswordController.text) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Пароли не совпадают')));
-    } else if (users.any((user) => user.login == loginController.text)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Пользователь с таким логином уже существует')),
-      );
-    } else {
-      var user = User(
-        name: nameController.text,
-        login: loginController.text,
-        password: passwordController.text,
-      );
-      users.add(user);
-      Navigator.pop(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Вы успешно зарегистрировались!')));
+
+      return;
     }
+
+    final user = User.newUser(
+      name: nameController.text,
+      login: loginController.text,
+      password: passwordController.text,
+      role: 'user',
+    );
+
+    await ref.read(authProvider.notifier).register(user);
   }
 }

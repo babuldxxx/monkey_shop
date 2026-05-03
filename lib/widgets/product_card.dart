@@ -32,12 +32,7 @@ class ProductCart extends StatelessWidget {
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(20),
               ),
-              child: Image.asset(
-                product.pathImage,
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
+              child: product.imageData != null ? Image.memory(product.imageData!, width: double.infinity, fit: BoxFit.cover,) : Image.asset('assets/mom.jpg')
             ),
 
             Container(
