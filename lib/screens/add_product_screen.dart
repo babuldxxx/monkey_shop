@@ -40,7 +40,10 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     );
     qrData = widget.product?.qrData ?? '';
     imageData = widget.product?.imageData;
-    isActive = widget.product?.status == 'available';
+    // если добавляем новый товар, статус по умолчанию должен быть доступен
+    isActive = widget.product != null
+        ? (widget.product!.status == 'available')
+        : true;
   }
 
   @override

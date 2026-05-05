@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:monkey_shop/domain/models/user.dart';
 import 'package:monkey_shop/providers/auth_notifier.dart';
 import 'package:monkey_shop/providers/product_notifier.dart';
 import 'package:monkey_shop/screens/auth_screen.dart';
@@ -30,7 +29,7 @@ class MainScreen extends ConsumerWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => QRScannerScreen(products: products),
+                  builder: (context) => QRScannerScreen(),
                 ),
               );
             },

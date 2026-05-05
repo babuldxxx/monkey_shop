@@ -40,7 +40,7 @@ class Database extends _$Database {
               name: 'product 1',
               description: 'description product 1',
               imageData: productImage == null ? const Value.absent() : Value(productImage),
-              status: 'свободен',
+              status: 'available',
               qrData: 'product 1',
               createdBy: 1,
               createdAt: Value(DateTime.now()),
