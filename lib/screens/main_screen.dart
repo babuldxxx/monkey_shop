@@ -1,53 +1,44 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/product_details_screen.dart';
-import 'package:flutter_application_1/screens/qr_scanner_screen.dart';
-import '../models/product.dart';
-import '../widgets/product_cart.dart';
+import 'package:monkey_shop/providers/auth_notifier.dart';
+import 'package:monkey_shop/providers/product_notifier.dart';
+import 'package:monkey_shop/screens/auth_screen.dart';
+import 'package:monkey_shop/screens/product_details_screen.dart';
+import 'package:monkey_shop/screens/qr_scanner_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../widgets/product_card.dart';
 import '../screens/add_product_screen.dart';
 
-class MainScreen extends StatefulWidget {
+class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key, required this.title});
+
   final String title;
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  ConsumerState<MainScreen> createState() => _MainScreenState();
 }
 
-final products = [
-    Product(
-      name: 'Punch`s mother',
-      pathImage: 'assets/mom.jpg',
-      description: 'Игрушечная мама Панча из Икеи.',
-      qrData: 'Data 1'
-    ),
-    Product(
-      name: 'Punch with mom ',
-      pathImage: 'assets/punch_with_mom.jpg',
-      description:
-          'Панча бросила его настоящая мама. Теперь мамой он считает игрушку, в которой видит защиту',
-      qrData: 'Data 1'
-    ),
-    Product(
-      name: 'Punch is sad',
-      pathImage: 'assets/punch is sad.jpg',
-      description:
-          'Панча обижают его сородичи, поэтому ему грустно и страшно. От врагов он прикрывается плюшевой мамой.',
-      qrData: 'Data 1',
-      isActive: true,
-    ),
-    Product(
-      name: 'Punch with a new friend',
-      pathImage: 'assets/punch witn friend.jpg',
-      description: 'Панча приняла одна из обезьян и теперь он не одинок.',
-      qrData: 'Data 1',
-      isActive: true,
-    ),
-  ];
+class _MainScreenState extends ConsumerState<MainScreen> {
+  bool _isSyncing = true;
 
-class _MainScreenState extends State<MainScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _performInitialSync();
+  }
+
+  Future<void> _performInitialSync() async {
+    setState(() => _isSyncing = true);
+    await ref.read(productProvider.notifier).initialSync();
+    await ref.read(authProvider.notifier).initialSync();
+    if(mounted) setState(()=> _isSyncing = false);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final products = ref.watch(productProvider);
+    final authState = ref.watch(authProvider);
+    final currentUser = authState.value;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 203, 172, 160),
@@ -56,55 +47,88 @@ class _MainScreenState extends State<MainScreen> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => QRScannerScreen(
-                    products: products,
-                  )
-                )
+                MaterialPageRoute(builder: (context) => QRScannerScreen()),
               );
             },
             icon: const Icon(Icons.camera_alt_rounded),
-
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              Navigator.pop(context);
+            onPressed: () async {
+              final shouldLogout = await showDialog<bool>(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text('Выход из аккаунта'),
+                    content: const Text(
+                      'Вы уверены, что хотите выйти из аккаунт?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Отмена'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red,
+                        ),
+                        child: const Text('Выйти'),
+                      ),
+                    ],
+                  );
+                },
+              );
+              if (shouldLogout == true) {
+                await ref.read(authProvider.notifier).logout();
+
+                if (context.mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AuthScreen()),
+                    (route) => false,
+                  );
+                }
+              }
             },
           ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: products.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: EdgeInsets.only(right: 10, left: 10, top: 20),
-            child: ProductCart(
-              product: products[index],
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProductDetailsScreen(product: products[index]),
+      body: _isSyncing
+          ? const Center(child: CircularProgressIndicator())
+          : products.isEmpty
+          ? const Center(child: Text('Нет доступных товаров'))
+          : ListView.builder(
+              itemCount: products.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: EdgeInsets.only(right: 10, left: 10, top: 20),
+                  child: ProductCart(
+                    product: products[index],
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ProductDetailsScreen(product: products[index]),
+                        ),
+                      );
+                    },
                   ),
                 );
               },
-              ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(onPressed: (){
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => AddProductScreen(),   
-        )
-      ).then((_){
-        setState((){});
-      });
-    }, child: Icon(Icons.add),
-    ),
+            ),
+      floatingActionButton: currentUser?.isAdmin == true
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AddProductScreen()),
+                );
+              },
+              child: Icon(Icons.add),
+            )
+          : null,
     );
   }
-
 }
