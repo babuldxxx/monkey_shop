@@ -7,6 +7,15 @@ part 'database.g.dart';
 @DriftDatabase(tables: [UserData, ProductData, TakeData])
 class Database extends _$Database {
   Database(super.e);
+  
+  static Future<Uint8List?> loadImageFromAssets(String assetPath)  async {
+    try{
+      final ByteData imageData =  await rootBundle.load(assetPath);
+      return imageData.buffer.asUint8List();
+    } catch(error){
+      return null;
+    }
+  }
 
   @override
   int get schemaVersion => 3;
@@ -26,22 +35,45 @@ class Database extends _$Database {
               role: Value('admin'),
             ),
           ]);
-
-          Uint8List? productImage;
-          try{
-            final ByteData imageData = await rootBundle.load('assets/mom.jpg');
-            productImage = imageData.buffer.asUint8List();
-          } catch (error){
-            productImage = null;
-          }
+          
 
           b.insertAll(productData, [
             ProductDataCompanion.insert(
-              name: 'product 1',
-              description: 'description product 1',
-              imageData: productImage == null ? const Value.absent() : Value(productImage),
+              name: 'Punch`s mother',
+              description: 'Игрушечная мама Панча из Икеи.',
+              imageData: Value(await loadImageFromAssets('assets/mom.jpg')),
               status: 'available',
-              qrData: 'product 1',
+              qrData: 'Punch`s mother',
+              createdBy: 1,
+              createdAt: Value(DateTime.now()),
+              updatedAt: Value(DateTime.now()),
+            ),
+            ProductDataCompanion.insert(
+              name: 'Punch with mom',
+              description: 'Панча бросила его настоящая мама. Теперь мамой он считает игрушку, в которой видит защиту',
+              imageData: Value(await loadImageFromAssets('assets/punch_with_mom.jpg')),
+              status: 'available',
+              qrData: 'Punch with mom',
+              createdBy: 1,
+              createdAt: Value(DateTime.now()),
+              updatedAt: Value(DateTime.now()),
+            ),
+            ProductDataCompanion.insert(
+              name: 'Punch is sad',
+              description: 'Панча обижают его сородичи, поэтому ему грустно и страшно. От врагов он прикрывается плюшевой мамой.',
+              imageData: Value(await loadImageFromAssets('assets/punch_is_sad.jpg')),
+              status: 'available',
+              qrData: 'Punch is sad',
+              createdBy: 1,
+              createdAt: Value(DateTime.now()),
+              updatedAt: Value(DateTime.now()),
+            ),
+            ProductDataCompanion.insert(
+              name: 'Punch with a new friend',
+              description: 'Панча приняла одна из обезьян и теперь он не одинок.',
+              imageData: Value(await loadImageFromAssets('assets/punch_with_friend.jpg')),
+              status: 'available',
+              qrData: 'Punch with a new friend',
               createdBy: 1,
               createdAt: Value(DateTime.now()),
               updatedAt: Value(DateTime.now()),

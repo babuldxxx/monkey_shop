@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "735227481276",
+    "project_id": "monkeyshop-5b345",
+    "storage_bucket": "monkeyshop-5b345.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:735227481276:android:7681bccd9c12da404654b9",
+        "android_client_info": {
+          "package_name": "com.example.monkey_shop"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcdGqhqm_cQMxOxcTIojfzhdmbD7XD5v4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

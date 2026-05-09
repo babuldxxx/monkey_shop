@@ -8,16 +8,35 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/product_card.dart';
 import '../screens/add_product_screen.dart';
 
-class MainScreen extends ConsumerWidget {
+class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key, required this.title});
 
   final String title;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends ConsumerState<MainScreen> {
+  bool _isSyncing = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _performInitialSync();
+  }
+
+  Future<void> _performInitialSync() async {
+    setState(() => _isSyncing = true);
+    await ref.read(productProvider.notifier).initialSync();
+    await ref.read(authProvider.notifier).initialSync();
+    if(mounted) setState(()=> _isSyncing = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final products = ref.watch(productProvider);
     final authState = ref.watch(authProvider);
-
     final currentUser = authState.value;
 
     return Scaffold(
@@ -28,9 +47,7 @@ class MainScreen extends ConsumerWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => QRScannerScreen(),
-                ),
+                MaterialPageRoute(builder: (context) => QRScannerScreen()),
               );
             },
             icon: const Icon(Icons.camera_alt_rounded),
@@ -77,7 +94,9 @@ class MainScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: products.isEmpty
+      body: _isSyncing
+          ? const Center(child: CircularProgressIndicator())
+          : products.isEmpty
           ? const Center(child: Text('Нет доступных товаров'))
           : ListView.builder(
               itemCount: products.length,

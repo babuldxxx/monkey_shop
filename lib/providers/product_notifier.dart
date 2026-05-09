@@ -2,6 +2,7 @@ import 'package:monkey_shop/data/repository/product_repository.dart';
 import 'package:monkey_shop/data/repository/take_repository.dart';
 import 'package:monkey_shop/domain/models/product.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:monkey_shop/utils/connectivity_service.dart';
 
 class ProductNotifier extends Notifier<List<Product>> {
   late final ProductRepository _productRepository;
@@ -22,12 +23,26 @@ class ProductNotifier extends Notifier<List<Product>> {
     state = List<Product>.from(products);
   }
 
+  Future<void> initialSync() async {
+    await loadProduct();
+
+    if(await ConnectivityService.hasInternet()){
+      await _productRepository.fullSync();
+      await loadProduct();
+    }
+  }
+
   Future<void> addProduct(Product product) async {
     await _productRepository.addProduct(product);
     await loadProduct();
   }
 
   Future<void> deleteProduct(int id) async {
+    final hasInternet = await ConnectivityService.hasInternet();
+    if(!hasInternet){
+      throw Exception('Удаление невозможно без интернета');
+    }
+
     await _productRepository.deleteProduct(id);
     state = state.where((p) => p.id != id).toList();
   }

@@ -11,6 +11,10 @@ class AuthNotifier extends AsyncNotifier<User?> {
     return null;
   }
 
+  Future<void> initialSync() async {
+    await _userRepository.fullSync();
+  }
+
   Future<void> auth(String login, String password) async {
     state = const AsyncLoading();
     try {

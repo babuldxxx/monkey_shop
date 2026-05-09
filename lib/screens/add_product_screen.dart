@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -40,10 +39,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     );
     qrData = widget.product?.qrData ?? '';
     imageData = widget.product?.imageData;
-    // если добавляем новый товар, статус по умолчанию должен быть доступен
-    isActive = widget.product != null
-        ? (widget.product!.status == 'available')
-        : true;
+    isActive = widget.product?.status == 'available';
   }
 
   @override
@@ -282,7 +278,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   qrData = nameController.text;
                   return PrettyQrView(
                     qrImage: QrImage(
-                      QrCode(8, QrErrorCorrectLevel.H)..addData(qrData!),
+                      QrCode(8, QrErrorCorrectLevel.H)..addData(qrData),
                     ),
                     decoration: const PrettyQrDecoration(),
                   );

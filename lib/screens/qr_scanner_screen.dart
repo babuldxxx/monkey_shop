@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:monkey_shop/domain/models/product.dart';
-import 'package:monkey_shop/domain/models/user.dart';
-import 'package:monkey_shop/screens/product_details_screen.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:monkey_shop/data/repository/product_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:monkey_shop/data/repository/take_repository.dart';
+import 'package:monkey_shop/domain/models/product.dart';
 import 'package:monkey_shop/providers/auth_notifier.dart';
 import 'package:monkey_shop/providers/product_notifier.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:monkey_shop/screens/product_details_screen.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 class QRScannerScreen extends ConsumerStatefulWidget {
+
   const QRScannerScreen({super.key});
 
   @override
-  ConsumerState<QRScannerScreen> createState() => _QRScannerScreenState();
+  ConsumerState<QRScannerScreen> createState() => _QRScannerScreen();
 }
 
-class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
+class _QRScannerScreen extends ConsumerState<QRScannerScreen> {
   final MobileScannerController cameraController = MobileScannerController(
+    autoStart: true,
     detectionSpeed: DetectionSpeed.noDuplicates,
     facing: CameraFacing.back,
   );
+
 
   @override
   void dispose() {
@@ -28,42 +29,173 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
     super.dispose();
   }
 
-  void _onDetect(BarcodeCapture capture) async {
-    for (final barcode in capture.barcodes) {
+  void _onDetect(BarcodeCapture capture) {
+    final List<Barcode> barcodes = capture.barcodes;
+    for (final barcode in barcodes) {
       if (barcode.rawValue != null) {
-        await _handleScan(barcode.rawValue!);
+        _findAndNavigate(barcode.rawValue!);
         break;
       }
     }
   }
 
-  Future<void> _handleScan(String qrData) async {
-    final productRepo = ProductRepository();
-    final products = await productRepo.getProducts();
-    Product? product = products.firstWhere((p) => p.qrData == qrData);
+  void _findAndNavigate(String qrData) async {
+    final products = ref.read(productProvider);
 
-    final currentUserAsync = ref.read(authProvider);
-    final User? currentUser = currentUserAsync.value;
-    final int userId = currentUser?.id ?? 1;
-    final takeRepo = TakeRepository();
-    if (product.isActive) {
-      await takeRepo.createTake(userId, product.id!);
-    } else {
-      await takeRepo.returnTake(product.id!);
+    Product? foundProduct;
+    try {
+      foundProduct = products.firstWhere(
+            (product) => product.qrData == qrData,
+      );
+    } catch(error){
+      if(mounted){
+        await _showErrorDialog('Товар не найден', 'Товар с QR-кодом "$qrData" не существует');
+      }
+      return;
     }
 
-    await ref.read(productProvider.notifier).loadProduct();
-    final updatedList = ref.read(productProvider);
-    final updatedProduct = updatedList.firstWhere(
-      (p) => p.qrData == qrData,
-      orElse: () => product,
-    );
+    final authState = ref.read(authProvider);
+    final currentUser = authState.value;
+    final takeRepository = TakeRepository();
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProductDetailsScreen(product: updatedProduct),
-      ),
+    if (foundProduct.isActive) {
+      final confirm = await _showConfirmationDialog(
+        'Взять товар',
+        'Вы хотите взять товар "${foundProduct.name}"?',
+      );
+
+      if (confirm == true) {
+        await takeRepository.createTake(currentUser!.id, foundProduct.id!);
+        await ref.read(productProvider.notifier).loadProduct();
+
+        final updatedProducts = ref.read(productProvider);
+        final updatedProduct = updatedProducts.firstWhere((p) => p.id == foundProduct!.id);
+
+        if (mounted) {
+          await _showSuccessDialog(
+            'Товар взят',
+            'Вы успешно взяли товар "${foundProduct.name}"',
+          );
+
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    ProductDetailsScreen(product: updatedProduct),
+              ),
+            );
+          }
+        }
+      }
+    } else if (foundProduct.isTaken) {
+      final isTakenByUser = await takeRepository.isProductTakenByUser(
+        foundProduct.id!,
+        currentUser!.id,
+      );
+
+      if (isTakenByUser) {
+        final confirm = await _showConfirmationDialog(
+          'Вернуть товар',
+          'Вы хотите вернуть товар "${foundProduct.name}"?',
+        );
+
+        if (confirm == true) {
+          await takeRepository.returnTake(foundProduct.id!);
+          await ref.read(productProvider.notifier).loadProduct();
+
+          final updatedProducts = ref.read(productProvider);
+          final updatedProduct = updatedProducts.firstWhere((p) => p.id == foundProduct!.id);
+
+          if (mounted) {
+            await _showSuccessDialog(
+              'Товар возвращен',
+              'Вы успешно вернули товар "${foundProduct.name}"',
+            );
+
+            if (mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ProductDetailsScreen(product: updatedProduct),
+                ),
+              );
+            }
+          }
+        }
+      }
+    }
+  }
+
+  Future<bool?> _showConfirmationDialog(String title, String content) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(content),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Отмена'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(foregroundColor: Colors.green),
+              child: const Text('Подтвердить'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showErrorDialog(String title, String message) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.pop(context);
+              },
+              child: const Text('ОК'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showSuccessDialog(String title, String message) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
     );
   }
 

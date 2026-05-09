@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:monkey_shop/data/repository/user_repository.dart';
 import 'package:monkey_shop/providers/auth_notifier.dart';
 import "main_screen.dart";
 import 'register_screen.dart';
-import "../domain/models/user.dart";
 import '../widgets/button_app.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
