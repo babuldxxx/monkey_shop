@@ -159,55 +159,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     );
   }
 
-  /*void addProduct() async {
-    if (!formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Пожалуйста, заполните все поля")),
-      );
-      return;
-    }
-
-    if (nameController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Поля введены неверно")));
-      return;
-    }
-
-    try {
-      Uint8List? imageBytes;
-      if (_fileImage != null) {
-        imageBytes = await _fileImage!.readAsBytes();
-      }
-
-      final product = Product(
-        name: nameController.text,
-        imageData: imageBytes,
-        // выяснить
-        description: descController.text,
-        qrData: qrData ?? nameController.text,
-        status: 'Занят',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-
-      ref.read(productProvider.notifier).addProduct(product);
-
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Вы успешно добавили товар!")));
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Ошибка добавления товара $error")),
-        );
-      }
-    }
-  }*/
-
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.product != null;
@@ -287,7 +238,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
             else
               const SizedBox.shrink(),
 
-            ElevatedButton(onPressed: _saveProduct, child: Text(isEditing ? 'Добавить' : 'Изменить')),
+            ElevatedButton(onPressed: _saveProduct, child: Text(isEditing ? 'Изменить' : 'Добавить')),
           ],
         ),
       ),

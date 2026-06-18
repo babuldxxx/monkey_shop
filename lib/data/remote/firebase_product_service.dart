@@ -38,6 +38,7 @@ class FirebaseProductService {
 
   Future<void> upsertProduct(Product product) async {
     final docId = 'product_${product.id}';
+
     final Map<String, dynamic> data = {
       'localId': product.id,
       'name': product.name,
